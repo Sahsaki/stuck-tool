@@ -1,0 +1,60 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "stuck-tool"
+version = "0.1.0"
+description = "A tiny committee of pretend experts for when you're stuck."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "stuck-tool contributors" },
+]
+keywords = ["ai", "agents", "deliberation", "problem-solving", "mcp", "claude", "codex"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    "litellm>=1.40.0",
+    "click>=8.0",
+    "rich>=13.0",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+mcp = ["mcp[cli]>=1.0.0,<2"]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "ruff>=0.4",
+]
+all = ["stuck-tool[mcp,dev]"]
+
+[project.scripts]
+stuck-tool = "stuck_tool.cli:main"
+stuck = "stuck_tool.cli:main"
+stuck-deepdive = "stuck_tool.cli:deepdive"
+stuck-tool-mcp = "stuck_tool.mcp_server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["stuck_tool"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

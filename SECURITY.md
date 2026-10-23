@@ -1,0 +1,40 @@
+# Security and privacy
+
+## Data handling
+
+Each user supplies their own provider credentials. Keys are passed to the configured
+provider for authentication, not included as deliberation messages or result fields.
+The application does not intentionally upload the user's environment, Git configuration,
+local source tree, or credentials to GitHub. Public source does not give users access
+to the maintainer's API account.
+
+Problems and simulated panel feedback go to the user's configured LLM provider.
+MCP results go back to the connected host; optional Markdown and JSON reports contain
+the problem and generated feedback. Provider and host retention policies apply.
+This is not an offline or confidential-computing guarantee.
+
+Use environment variables for keys. Avoid `--api-key`: command arguments can appear in
+shell history and process listings. Some LiteLLM versions automatically load local `.env`
+files. `.gitignore` excludes `.env`, common credential files, logs, and the documented
+default reports; other report filenames require review or should go in `reports/`.
+Git ignore rules do not remove files that were already committed.
+
+Our provider-error messages omit raw exception bodies, and configuration repr omits
+the API key. Model-validation errors omit raw model output at CLI/MCP boundaries.
+This does not prevent secrets from appearing if a user includes them in their problem,
+enables third-party debug/callback logging, or shares reports. Third-party dependencies
+still run with the user's process permissions; keep them updated.
+
+The MCP server uses local stdio. The deliberation agents cannot execute code or read
+files. CLI report output writes to the paths explicitly requested by the caller; only
+connect trusted MCP hosts and use a provider/base URL you trust. Deep dive makes many
+provider calls and has no hard dollar spending cap.
+
+## Reporting issues
+
+After public hosting is configured, use the repository's **Security > Report a
+vulnerability** feature when enabled. Do not include actual API keys, personal data,
+or exploitable details in public issues. This project has no guaranteed response SLA.
+
+If a real credential reaches a public repository, revoke or rotate it immediately.
+Deleting a file or making the repository private does not reliably undo public exposure.

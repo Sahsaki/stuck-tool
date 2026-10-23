@@ -1,0 +1,52 @@
+# .gitignore for stuck-tool
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Distribution
+*.tar.gz
+*.whl
+.env
+.env.*
+!.env.example
+.ruff_cache/
+
+# Local credentials and generated run data
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+service-account*.json
+*.log
+reports/
+/report.md
+/result.json
