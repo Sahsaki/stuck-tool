@@ -8,8 +8,9 @@ GitHub will still associate a public repository with your account and public pro
    email addresses private** and **Block command line pushes that expose my email**.
    Review your public profile name, bio, and location before creating a public project.
 2. Extract the reviewed source archive into a new folder. In that folder, check that
-   `.github`, `stuck_tool`, and `tests` are present alongside `.gitignore`, the Markdown
-   docs, `LICENSE`, and `pyproject.toml`. Do not add anything from your development folder.
+   `.github`, `.agents`, `.claude-plugin`, `stuck_tool`, and `tests` are present alongside
+   `.gitignore`, `.mcp.json`, `mcp.json`, `plugin.json`, the Markdown docs, `LICENSE`, and
+   `pyproject.toml`. Do not add anything from your development folder.
 3. Open [New repository](https://github.com/new), name it `stuck-tool`, and start with
    **Private** visibility. Leave the README, license, and gitignore initialization empty
    because the source already includes them.

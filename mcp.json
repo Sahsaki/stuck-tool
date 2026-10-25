@@ -1,0 +1,18 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "stuck-tool": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "stuck-tool[mcp] @ git+https://github.com/Sahsaki/stuck-tool.git",
+        "stuck-tool-mcp"
+      ],
+      "env": {
+        "STUCK_TOOL_CONFIG_ROOT": "${PLUGIN_DATA}"
+      },
+      "cwd": "${PLUGIN_ROOT}"
+    }
+  }
+}

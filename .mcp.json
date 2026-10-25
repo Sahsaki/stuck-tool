@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "stuck-tool": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "stuck-tool[mcp] @ git+https://github.com/Sahsaki/stuck-tool.git",
+        "stuck-tool-mcp"
+      ],
+      "env": {
+        "STUCK_TOOL_API_KEY": "${STUCK_TOOL_API_KEY:-}",
+        "STUCK_TOOL_MODEL": "${STUCK_TOOL_MODEL:-}",
+        "STUCK_TOOL_API_BASE": "${STUCK_TOOL_API_BASE:-}",
+        "OPENAI_API_KEY": "${OPENAI_API_KEY:-}",
+        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY:-}",
+        "OLLAMA_HOST": "${OLLAMA_HOST:-}"
+      }
+    }
+  }
+}

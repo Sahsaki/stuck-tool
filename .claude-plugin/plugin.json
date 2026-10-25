@@ -1,0 +1,9 @@
+{
+  "name": "stuck-tool",
+  "description": "A tiny committee of pretend experts for when you're stuck.",
+  "version": "0.1.0",
+  "author": {
+    "name": "stuck-tool contributors"
+  },
+  "repository": "https://github.com/Sahsaki/stuck-tool"
+}

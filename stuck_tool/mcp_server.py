@@ -139,14 +139,13 @@ def create_mcp_server():
         if not isinstance(model, str) or not isinstance(full_report, bool):
             return [TextContent(type="text", text="Error: invalid model or full_report")]
 
-        config = LLMConfig(model=model)
-        engine = StuckEngine(
-            llm_config=config,
-            mode=mode,
-            quiet=True,  # No terminal output in MCP mode
-        )
-
         try:
+            config = LLMConfig(model=model)
+            engine = StuckEngine(
+                llm_config=config,
+                mode=mode,
+                quiet=True,  # No terminal output in MCP mode
+            )
             result = await engine.run(problem)
             report = format_result_markdown(result, full=full_report)
 

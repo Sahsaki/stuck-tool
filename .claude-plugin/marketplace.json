@@ -1,0 +1,14 @@
+{
+  "name": "stuck-tool",
+  "description": "Local MCP tools for getting unstuck.",
+  "owner": {
+    "name": "stuck-tool contributors"
+  },
+  "plugins": [
+    {
+      "name": "stuck-tool",
+      "source": "./",
+      "description": "A tiny committee of pretend experts for when you're stuck."
+    }
+  ]
+}

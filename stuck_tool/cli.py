@@ -163,24 +163,21 @@ def main(
         raise click.UsageError("Choose only one of --quick, --express, and --deepdive")
     mode = "deepdive" if deepdive else "express" if express else "quick" if quick else "full"
 
-    # Build config
-    llm_config = LLMConfig(
-        model=model,
-        api_key=api_key,
-        api_base=api_base,
-        max_concurrent=max_concurrent,
-        temperature=temperature,
-    )
-
-    # Run the engine
-    engine = StuckEngine(
-        llm_config=llm_config,
-        discussion_rounds=rounds,
-        quiet=quiet,
-        mode=mode,
-    )
-
+    llm_config = None
     try:
+        llm_config = LLMConfig(
+            model=model,
+            api_key=api_key,
+            api_base=api_base,
+            max_concurrent=max_concurrent,
+            temperature=temperature,
+        )
+        engine = StuckEngine(
+            llm_config=llm_config,
+            discussion_rounds=rounds,
+            quiet=quiet,
+            mode=mode,
+        )
         result = asyncio.run(engine.run(problem))
     except KeyboardInterrupt:
         console.print("\n[yellow]Interrupted by user.[/]")
@@ -194,7 +191,6 @@ def main(
         console.print(f"\nError: {detail}", markup=False)
         if not quiet:
             console.print("[dim]Tip: Check your API key and model settings.[/]")
-            console.print(f"[dim]Model: {llm_config.model}[/]")
         sys.exit(1)
 
     # Display results

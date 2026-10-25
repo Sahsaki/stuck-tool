@@ -37,6 +37,7 @@ htmlcov/
 .env
 .env.*
 !.env.example
+.stuck-tool.json
 .ruff_cache/
 
 # Local credentials and generated run data

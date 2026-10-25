@@ -1,0 +1,20 @@
+{
+  "name": "stuck-tool",
+  "interface": {
+    "displayName": "stuck-tool"
+  },
+  "plugins": [
+    {
+      "name": "stuck-tool",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

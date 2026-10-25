@@ -98,6 +98,28 @@ def test_config_repr_omits_api_key():
     )
 
 
+def test_plugin_config_uses_plugin_data_and_environment_wins(monkeypatch, tmp_path):
+    (tmp_path / ".stuck-tool.json").write_text(
+        '{"model":"anthropic/test","api_key":"file-key","api_base":"https://file"}',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("STUCK_TOOL_CONFIG_ROOT", str(tmp_path))
+    monkeypatch.setenv("STUCK_TOOL_API_KEY", "environment-key")
+    config = LLMConfig()
+    assert config.model == "anthropic/test"
+    assert config.api_key == "environment-key"
+    assert config.api_base == "https://file"
+
+
+def test_plugin_config_errors_do_not_echo_content(monkeypatch, tmp_path):
+    secret = "canary-private-credential"
+    (tmp_path / ".stuck-tool.json").write_text(secret, encoding="utf-8")
+    monkeypatch.setenv("STUCK_TOOL_CONFIG_ROOT", str(tmp_path))
+    with pytest.raises(ValueError, match="valid JSON") as error:
+        LLMConfig(model="test")
+    assert secret not in str(error.value)
+
+
 @pytest.mark.parametrize("error_type", [RuntimeError, ValueError])
 async def test_provider_errors_do_not_expose_credentials(monkeypatch, caplog, error_type):
     secret = "canary-private-credential"
