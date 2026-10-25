@@ -13,10 +13,13 @@ MCP results go back to the connected host; optional Markdown and JSON reports co
 the problem and generated feedback. Provider and host retention policies apply.
 This is not an offline or confidential-computing guarantee.
 
-Use environment variables for keys. Avoid `--api-key`: command arguments can appear in
-shell history and process listings. Some LiteLLM versions automatically load local `.env`
-files. `.gitignore` excludes `.env`, common credential files, logs, and the documented
-default reports; other report filenames require review or should go in `reports/`.
+Use environment variables for keys. The ChatGPT desktop plugin can instead read a local
+`.stuck-tool.json` file from its writable plugin-data directory. Its path is supplied by
+the app and the file is outside the source checkout. Never put keys in plugin manifests.
+Avoid `--api-key`: command arguments can appear in shell history and process listings.
+Some LiteLLM versions automatically load local `.env` files. `.gitignore` excludes `.env`,
+`.stuck-tool.json`, common credential files, logs, and the documented default reports;
+other report filenames require review or should go in `reports/`.
 Git ignore rules do not remove files that were already committed.
 
 Our provider-error messages omit raw exception bodies, and configuration repr omits
@@ -25,10 +28,12 @@ This does not prevent secrets from appearing if a user includes them in their pr
 enables third-party debug/callback logging, or shares reports. Third-party dependencies
 still run with the user's process permissions; keep them updated.
 
-The MCP server uses local stdio. The deliberation agents cannot execute code or read
-files. CLI report output writes to the paths explicitly requested by the caller; only
-connect trusted MCP hosts and use a provider/base URL you trust. Deep dive makes many
-provider calls and has no hard dollar spending cap.
+The MCP server uses local stdio. The ChatGPT desktop plugin reads credentials only from
+the local `.stuck-tool.json` in its plugin-data directory or from provider environment
+variables; it does not send credentials in tool arguments. The deliberation agents
+cannot execute code or read files. CLI report output writes to the paths explicitly
+requested by the caller; only connect trusted MCP hosts and use a provider/base URL you
+trust. Deep dive makes many provider calls and has no hard dollar spending cap.
 
 ## Reporting issues
 

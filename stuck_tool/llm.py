@@ -13,6 +13,7 @@ import logging
 import os
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import litellm
 
@@ -20,6 +21,32 @@ logger = logging.getLogger("stuck_tool.llm")
 
 # Suppress litellm's verbose logging by default
 litellm.suppress_debug_info = True
+
+
+def _load_plugin_config() -> dict:
+    """Read the optional per-user config from a local plugin checkout."""
+    plugin_root = os.environ.get("STUCK_TOOL_CONFIG_ROOT") or os.environ.get("PLUGIN_ROOT")
+    if not plugin_root:
+        return {}
+
+    path = Path(plugin_root) / ".stuck-tool.json"
+    if path.is_symlink():
+        raise ValueError("Local plugin config must not be a symlink")
+    try:
+        config = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    except (OSError, UnicodeError):
+        raise ValueError("Could not read local plugin config (.stuck-tool.json)") from None
+    except json.JSONDecodeError:
+        raise ValueError("Local plugin config must contain valid JSON") from None
+
+    if not isinstance(config, dict):
+        raise ValueError("Local plugin config must be a JSON object")
+    for key in ("api_key", "model", "api_base"):
+        if key in config and not isinstance(config[key], str):
+            raise ValueError(f"Local plugin config field '{key}' must be a string")
+    return config
 
 
 @dataclass
@@ -40,15 +67,18 @@ class LLMConfig:
             raise ValueError("Concurrency, token limit, and timeout must be positive")
         if not 0 <= self.retry_count <= 2:
             raise ValueError("retry_count must be between 0 and 2")
+        plugin_config = _load_plugin_config()
         # Auto-detect model if not specified
         if not self.model:
-            self.model = os.environ.get("STUCK_TOOL_MODEL", "")
+            self.model = os.environ.get("STUCK_TOOL_MODEL") or plugin_config.get("model", "")
 
         if not self.api_key:
-            self.api_key = os.environ.get("STUCK_TOOL_API_KEY", "")
+            self.api_key = os.environ.get("STUCK_TOOL_API_KEY") or plugin_config.get("api_key", "")
 
         if not self.api_base:
-            self.api_base = os.environ.get("STUCK_TOOL_API_BASE", "")
+            self.api_base = os.environ.get("STUCK_TOOL_API_BASE") or plugin_config.get(
+                "api_base", ""
+            )
 
         # Auto-detect model from available API keys
         if not self.model:

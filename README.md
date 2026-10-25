@@ -86,25 +86,57 @@ exclusive. Python users can further lower `LLMConfig(max_tokens=...)`; too small
 can truncate structured responses. Input is limited to 20,000 characters, with an error
 instead of silently dropping context.
 
-## MCP integration
+## Claude Code app
 
-Install the `mcp` extra first. For clients using JSON MCP configuration:
+Install [uv](https://docs.astral.sh/uv/) and Claude Code. Add this repository's plugin
+marketplace, then install the plugin:
+
+```sh
+claude plugin marketplace add Sahsaki/stuck-tool
+claude plugin install stuck-tool@stuck-tool
+```
+
+Set `STUCK_TOOL_API_KEY` and `STUCK_TOOL_MODEL` in the environment used to launch Claude
+Code. For example, use `openai/gpt-4o` with an OpenAI API key or
+`anthropic/claude-sonnet-4-20250514` with an Anthropic API key. Restart Claude Code after
+changing environment variables. Claude Code subscriptions do not include provider API
+usage; calls are billed by the provider.
+
+## ChatGPT desktop app
+
+The ChatGPT desktop app can load the local marketplace in this repository. Install
+[uv](https://docs.astral.sh/uv/), clone the repository, open that checkout in the desktop
+app, restart the app, then install `stuck-tool` from the Plugins Directory.
+
+The plugin runs locally and needs your own model-provider API key. Create
+`.stuck-tool.json` in the writable plugin-data directory supplied to the plugin MCP
+server (`PLUGIN_DATA`) with your settings:
 
 ```json
 {
-  "mcpServers": {
-    "stuck-tool": {
-      "command": "python",
-      "args": ["-m", "stuck_tool.mcp_server"]
-    }
-  }
+  "model": "openai/gpt-4o",
+  "api_key": "your-provider-api-key"
 }
 ```
 
-Use the interpreter from the environment where you installed the package. The server
-inherits provider environment variables from its host. `stuck-tool-mcp` is an equivalent
-server entry point. Clients use their own configuration formats; the JSON above is not
-a universal config file.
+Use the matching model and key from the provider you choose. Keep this file private; it
+is outside the source checkout and must never be committed. ChatGPT subscriptions do not
+include provider API usage; calls are billed by the provider. The local marketplace is
+for desktop use; submitting a local-stdio plugin to OpenAI's public directory requires
+partner approval.
+
+On a default desktop install, plugin data is under `~/.codex/plugins/data/agent-plugins/`
+(Windows: `%USERPROFILE%\.codex\plugins\data\agent-plugins\`). Open the folder created
+for this plugin and save `.stuck-tool.json` there; the host passes its exact path as
+`PLUGIN_DATA` when it starts the server.
+
+## Other MCP clients
+
+Install `uv` and use the included `.mcp.json` as a starting point, or add a stdio server
+entry using `uvx --from "stuck-tool[mcp] @ git+https://github.com/Sahsaki/stuck-tool.git"
+stuck-tool-mcp`. Configure `STUCK_TOOL_API_KEY` and `STUCK_TOOL_MODEL` in the process
+environment. This server uses local stdio; each MCP client has its own configuration
+format.
 
 The `stuck` tool accepts:
 

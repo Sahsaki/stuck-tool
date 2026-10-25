@@ -1,0 +1,28 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "stuck-tool",
+  "version": "0.1.0",
+  "description": "A tiny committee of pretend experts for when you're stuck.",
+  "author": {
+    "name": "stuck-tool contributors"
+  },
+  "repository": "https://github.com/Sahsaki/stuck-tool",
+  "license": "MIT",
+  "keywords": ["problem-solving", "deliberation", "mcp"],
+  "extensions": {
+    "com.openai": {
+      "requires_local_executor": true,
+      "interface": {
+        "displayName": "stuck-tool",
+        "shortDescription": "A tiny committee for when you're stuck.",
+        "longDescription": "Generates situation-matched approaches and simulated panel feedback. It sends prompts to your configured LLM provider and does not modify files.",
+        "developerName": "stuck-tool contributors",
+        "category": "Productivity",
+        "capabilities": ["Read"],
+        "defaultPrompt": [
+          "Use stuck-tool to analyze this situation and recommend a practical next step."
+        ]
+      }
+    }
+  }
+}

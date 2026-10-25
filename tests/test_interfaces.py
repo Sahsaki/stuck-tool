@@ -2,6 +2,7 @@
 
 import json
 import sys
+from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
@@ -12,6 +13,30 @@ from stuck_tool.cli import deepdive, main
 from stuck_tool.mcp_server import create_mcp_server
 from stuck_tool.models import ApproachReview
 from stuck_tool.personas import MODES
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_plugin_manifests_are_wired_without_embedded_credentials():
+    def read(name):
+        return json.loads((ROOT / name).read_text(encoding="utf-8"))
+
+    openai_manifest = read("plugin.json")
+    openai_mcp = read("mcp.json")
+    marketplace = read(".agents/plugins/marketplace.json")
+    claude_plugin = read(".claude-plugin/plugin.json")
+    claude_marketplace = read(".claude-plugin/marketplace.json")
+    claude_mcp = read(".mcp.json")
+
+    assert openai_manifest["name"] == "stuck-tool"
+    server = openai_mcp["mcpServers"]["stuck-tool"]
+    assert server["type"] == "stdio"
+    assert server["env"]["STUCK_TOOL_CONFIG_ROOT"] == "${PLUGIN_DATA}"
+    assert marketplace["plugins"][0]["source"]["path"] == "./"
+    assert claude_plugin["name"] == claude_marketplace["plugins"][0]["name"]
+    assert claude_mcp["mcpServers"]["stuck-tool"]["command"] == "uvx"
+    assert "STUCK_TOOL_API_KEY" in claude_mcp["mcpServers"]["stuck-tool"]["env"]
+    assert "api_key" not in json.dumps([openai_manifest, openai_mcp, marketplace]).lower()
 
 
 @pytest.mark.parametrize(
@@ -177,6 +202,41 @@ def test_cli_validation_error_omits_model_input(monkeypatch):
     assert result.exit_code == 1
     assert "failed validation" in result.output
     assert "canary-private-feedback" not in result.output
+
+
+def test_cli_invalid_plugin_config_is_actionable_and_sanitized(monkeypatch, tmp_path):
+    secret = "canary-private-credential"
+    (tmp_path / ".stuck-tool.json").write_text(secret, encoding="utf-8")
+    monkeypatch.setenv("STUCK_TOOL_CONFIG_ROOT", str(tmp_path))
+
+    result = CliRunner().invoke(main, ["Plan the garden"])
+
+    assert result.exit_code == 1
+    assert "Local plugin config must contain valid JSON" in result.output
+    assert "Tip: Check your API key and model settings." in result.output
+    assert secret not in result.output
+    assert "Traceback" not in result.output
+
+
+def test_cli_does_not_echo_configured_model_on_failure(monkeypatch, tmp_path):
+    private_model = "canary-private-model-id"
+    (tmp_path / ".stuck-tool.json").write_text(
+        json.dumps({"model": private_model}), encoding="utf-8"
+    )
+    monkeypatch.setenv("STUCK_TOOL_CONFIG_ROOT", str(tmp_path))
+
+    async def fail(self, problem):
+        raise RuntimeError(
+            "LLM request failed (AuthenticationError). Check your provider settings."
+        )
+
+    monkeypatch.setattr("stuck_tool.core.StuckEngine.run", fail)
+    result = CliRunner().invoke(main, ["Plan the garden"])
+
+    assert result.exit_code == 1
+    assert "Check your API key and model settings." in result.output
+    assert private_model not in result.output
+    assert "Traceback" not in result.output
 
 
 async def test_mcp_validation_error_omits_model_input(monkeypatch, caplog):
