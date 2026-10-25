@@ -12,6 +12,20 @@ from a software architecture problem.
 research.** More agents do not guarantee a better answer. The tool proposes changes and asks
 whether you want to implement them; it does not modify files or browse for evidence.
 
+**[Install](#install)** · [Modes and cost](#modes-and-cost) · [Security](SECURITY.md)
+
+## Install
+
+Pick where you want to use it. Every setup that calls a model needs your own provider API
+key; the provider bills those calls separately from Claude Code or ChatGPT subscriptions.
+
+| Where | What you need | Setup guide |
+| --- | --- | --- |
+| Claude Code | Claude Code, `uv`, and a provider API key | [Claude Code steps](#claude-code-app) |
+| ChatGPT desktop | ChatGPT desktop, `uv`, and a provider API key | [ChatGPT desktop steps](#chatgpt-desktop-app) |
+| Terminal or Python | Python 3.10+ and a provider API key | [CLI and Python steps](#install-and-run) |
+| Another MCP client | An MCP host, `uv`, and a provider API key | [MCP steps](#other-mcp-clients) |
+
 ## Install and run
 
 Python 3.10+ is required. From a checkout:
