@@ -8,6 +8,7 @@ through litellm's unified interface.
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import logging
 import os
@@ -16,6 +17,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import litellm
+
+from stuck_tool.images import validate_images
 
 logger = logging.getLogger("stuck_tool.llm")
 
@@ -127,6 +130,7 @@ class LLMClient:
         temperature: float | None = None,
         max_tokens: int | None = None,
         response_format: str = "json",
+        images: list[tuple[str, bytes]] | None = None,
     ) -> str:
         """
         Send a completion request to the LLM.
@@ -137,14 +141,33 @@ class LLMClient:
             temperature: Override default temperature.
             max_tokens: Override default max tokens.
             response_format: "json" to request JSON output, "text" for free text.
+            images: Optional PNG, JPEG, or WebP images sent with the user message.
 
         Returns:
             The LLM's response text.
         """
         async with self._semaphore:
+            image_data = validate_images(images)
+            user_content = user_prompt
+            if image_data:
+                user_content = [
+                    {"type": "text", "text": user_prompt},
+                    *[
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": (
+                                    f"data:{mime_type};base64,"
+                                    f"{base64.b64encode(data).decode('ascii')}"
+                                )
+                            },
+                        }
+                        for mime_type, data in image_data
+                    ],
+                ]
             messages = [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
+                {"role": "user", "content": user_content},
             ]
 
             kwargs: dict = {
@@ -211,6 +234,7 @@ class LLMClient:
         user_prompt: str,
         temperature: float | None = None,
         max_tokens: int | None = None,
+        images: list[tuple[str, bytes]] | None = None,
     ) -> dict:
         """
         Send a completion request and parse the response as JSON.
@@ -223,6 +247,7 @@ class LLMClient:
             temperature=temperature,
             max_tokens=max_tokens,
             response_format="json",
+            images=images,
         )
 
         return parse_json_response(raw)

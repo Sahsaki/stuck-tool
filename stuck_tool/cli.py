@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import sys
+from pathlib import Path
 
 import click
 from pydantic import ValidationError
@@ -20,6 +21,7 @@ from pydantic import ValidationError
 from stuck_tool import __version__
 from stuck_tool.core import StuckEngine
 from stuck_tool.display import console, format_result_markdown, print_final_result
+from stuck_tool.images import MAX_IMAGES, load_image
 from stuck_tool.llm import LLMConfig
 
 HELP_EPILOG = """
@@ -29,6 +31,7 @@ Examples:
   stuck-tool --model gpt-4o "My auth system is too complex"
   stuck-tool --quick "How should I structure my database?"
   stuck-tool --output report.md "Performance is terrible"
+  stuck-tool --image screenshot.png "Why does this Roblox menu look wrong?"
   cat problem.txt | stuck-tool
   stuck-tool --express "Which framework should I use?"
   stuck-deepdive "Reconsider our entire product strategy"
@@ -99,6 +102,13 @@ Modes:
     help="Save full report to a markdown file.",
 )
 @click.option(
+    "--image",
+    "image_paths",
+    type=click.Path(path_type=Path),
+    multiple=True,
+    help="Attach a PNG, JPEG, or WebP screenshot (up to 3).",
+)
+@click.option(
     "--json-output",
     "-j",
     type=click.Path(),
@@ -134,6 +144,7 @@ def main(
     express: bool,
     deepdive: bool,
     output: str | None,
+    image_paths: tuple[Path, ...],
     json_output: str | None,
     quiet: bool,
     max_concurrent: int,
@@ -162,9 +173,12 @@ def main(
     if sum((quick, express, deepdive)) > 1:
         raise click.UsageError("Choose only one of --quick, --express, and --deepdive")
     mode = "deepdive" if deepdive else "express" if express else "quick" if quick else "full"
+    if len(image_paths) > MAX_IMAGES:
+        raise click.BadParameter(f"provide no more than {MAX_IMAGES} images", param_hint="--image")
 
     llm_config = None
     try:
+        images = [load_image(path) for path in image_paths]
         llm_config = LLMConfig(
             model=model,
             api_key=api_key,
@@ -178,7 +192,8 @@ def main(
             quiet=quiet,
             mode=mode,
         )
-        result = asyncio.run(engine.run(problem))
+        run = engine.run(problem, images=images) if images else engine.run(problem)
+        result = asyncio.run(run)
     except KeyboardInterrupt:
         console.print("\n[yellow]Interrupted by user.[/]")
         sys.exit(130)

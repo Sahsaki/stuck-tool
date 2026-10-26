@@ -8,6 +8,7 @@ from collections import Counter
 from typing import Callable
 
 from stuck_tool.display import console, print_header, print_phase
+from stuck_tool.images import validate_images
 from stuck_tool.llm import LLMClient, LLMConfig
 from stuck_tool.models import (
     AnalystReport,
@@ -58,7 +59,14 @@ class StuckEngine:
         self.quiet = quiet
         self.on_progress = on_progress
 
-    async def _ask(self, task, evidence, limit, persona: Persona | None = None):
+    async def _ask(
+        self,
+        task,
+        evidence,
+        limit,
+        persona: Persona | None = None,
+        images: list[tuple[str, bytes]] | None = None,
+    ):
         role = ""
         if persona:
             role = f"\nYour assigned simulated role: {compact(persona.model_dump())}"
@@ -66,6 +74,7 @@ class StuckEngine:
             system_prompt=SYSTEM + role + "\n" + task,
             user_prompt=compact(evidence),
             max_tokens=min(limit, self.client.config.max_tokens),
+            images=images,
         )
 
     def _progress(self, phase, description):
@@ -74,12 +83,15 @@ class StuckEngine:
         if self.on_progress:
             self.on_progress(description.lower(), 1.0)
 
-    async def run(self, problem: str) -> StuckResult:
+    async def run(
+        self, problem: str, images: list[tuple[str, bytes]] | None = None
+    ) -> StuckResult:
         if not isinstance(problem, str) or not problem.strip():
             raise ValueError("Provide a non-empty problem description")
         if len(problem) > 20000:
             raise ValueError("Problem exceeds 20,000 characters; provide a focused description")
         problem = problem.strip()
+        images = validate_images(images)
         before = self.client.stats
         if not self.quiet:
             print_header()
@@ -100,6 +112,7 @@ class StuckEngine:
                 ),
                 {"problem": problem},
                 8000 if self.mode == "deepdive" else 4000,
+                images=images,
             )
         )
         plan.check(self.profile)
@@ -110,6 +123,8 @@ class StuckEngine:
             "unknowns": plan.unknowns,
             "criteria": plan.criteria,
         }
+        if images:
+            context["visual_observations"] = plan.visual_observations
 
         self._progress(1, "Generate distinct approaches")
         approaches = await self._approaches(context, plan)
@@ -355,6 +370,7 @@ async def run_stuck(
     quiet: bool = False,
     *,
     mode: str = "full",
+    images: list[tuple[str, bytes]] | None = None,
 ) -> StuckResult:
     engine = StuckEngine(
         llm_config=LLMConfig(model=model, api_key=api_key),
@@ -362,4 +378,4 @@ async def run_stuck(
         quiet=quiet,
         mode=mode,
     )
-    return await engine.run(problem)
+    return await engine.run(problem, images=images)

@@ -49,6 +49,7 @@ Ollama if available. With only `STUCK_TOOL_API_KEY`, specify a matching model ex
 
 ```sh
 stuck-tool "How should we organize a community garden with limited volunteer time?"
+stuck-tool --quick --image screenshot.png "Why does this Roblox menu look wrong?"
 stuck-tool --quick --output report.md --json-output result.json "Reconsider our onboarding"
 stuck-tool --express "Which direction should we investigate first?"
 stuck-deepdive "Reconsider our product strategy and the conflicting stakeholder needs"
@@ -58,6 +59,11 @@ python -m stuck_tool --help
 
 Descriptions can also be piped through stdin. `stuck` is an alias for `stuck-tool`.
 `--quiet` prints just the recommendation; Markdown/JSON exports still work.
+
+Add `--image PATH` up to three times to include PNG, JPEG, or WebP screenshots (4 MiB
+each, 8 MiB total). The image is sent with the first planning request only; concise visual
+observations then guide the remaining analysis. The selected model must support vision.
+Images are not written to disk by the tool.
 
 ## Modes and cost
 
@@ -159,22 +165,35 @@ The `stuck` tool accepts:
   "problem": "What failed, what was tried, constraints, and desired outcome",
   "mode": "quick",
   "model": "",
-  "full_report": false
+  "full_report": false,
+  "images": [
+    {"mime_type": "image/png", "data": "<base64-encoded PNG bytes>"}
+  ]
 }
 ```
 
 Modes: `full`, `quick`, `express`, `deepdive`. Full reports include the chosen panel,
 approaches, all reviews, both discussion transcripts, and the recommendation. The
-compact response includes the roadmap, caveats, dissent, votes, and usage.
+compact response includes the roadmap, caveats, dissent, votes, and usage. MCP clients
+must pass screenshot bytes as base64 in `images`; the server does not capture the screen
+or read client-side paths. Use the CLI `--image` option if your MCP host cannot send image
+bytes in tool arguments.
 
 ## Python
 
 ```python
 import asyncio
+from pathlib import Path
 from stuck_tool.core import run_stuck
+from stuck_tool.images import load_image
 
 result = asyncio.run(
-    run_stuck("How should our garden organize volunteers?", mode="quick", quiet=True)
+    run_stuck(
+        "How should our garden organize volunteers?",
+        mode="quick",
+        quiet=True,
+        images=[load_image(Path("screenshot.png"))],
+    )
 )
 print(result.recommendation.summary)
 print(result.usage)
@@ -188,7 +207,8 @@ Environment variables: `STUCK_TOOL_MODEL`, `STUCK_TOOL_API_KEY`, `STUCK_TOOL_API
 and the chosen provider's own key variables. Some LiteLLM versions also load `.env`
 files automatically; treat them as local secrets and never upload them.
 Inputs and simulated feedback are sent to your configured LLM provider. Reports contain
-the supplied problem; review them for sensitive information before sharing.
+the supplied problem and may contain visual observations from screenshots; review them
+for sensitive information before sharing.
 Provider keys belong to each user: the public source contains no shared credentials.
 See [SECURITY.md](SECURITY.md) for data handling and [PUBLISHING.md](PUBLISHING.md)
 for a source-only GitHub upload that avoids local commit metadata.
