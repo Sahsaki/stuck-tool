@@ -9,6 +9,11 @@ local source tree, or credentials to GitHub. Public source does not give users a
 to the maintainer's API account.
 
 Problems and simulated panel feedback go to the user's configured LLM provider.
+PNG, JPEG, and WebP screenshots supplied by the user are sent to that provider with the
+initial planning request only (up to 3 images, 4 MiB each, 8 MiB total). The tool does not
+write raw screenshots to disk; generated visual observations may appear in the returned
+plan or report. Provider retention and billing policies apply. Crop or blur sensitive
+content before sending screenshots.
 MCP results go back to the connected host; optional Markdown and JSON reports contain
 the problem and generated feedback. Provider and host retention policies apply.
 This is not an offline or confidential-computing guarantee.

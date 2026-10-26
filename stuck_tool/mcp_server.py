@@ -48,6 +48,7 @@ def create_mcp_server():
 
     from stuck_tool.core import StuckEngine
     from stuck_tool.display import format_result_markdown
+    from stuck_tool.images import MAX_BASE64_CHARS, MAX_IMAGES, decode_mcp_images
     from stuck_tool.llm import LLMConfig
     from stuck_tool.personas import MODES
 
@@ -60,6 +61,8 @@ def create_mcp_server():
                 name="stuck",
                 description=(
                     "Multi-agent deliberation engine for when you're stuck on a problem. "
+                    "Can inspect up to 3 PNG, JPEG, or WebP screenshots when passed in "
+                    "the images argument; the configured model must support vision. "
                     "First analyzes the situation to design relevant approaches, simulated "
                     "users, and analyst specialties. Full/quick/express explore 10 approaches; "
                     "deepdive explores 20 with 20 users and 10 analysts. "
@@ -80,6 +83,30 @@ def create_mcp_server():
                                 "constraints, what you've already tried, and why "
                                 "you're not happy with current approaches."
                             ),
+                        },
+                        "images": {
+                            "type": "array",
+                            "maxItems": MAX_IMAGES,
+                            "description": (
+                                "Optional screenshots sent to the configured vision model "
+                                "during planning only. Each item has a MIME type and base64 data."
+                            ),
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "mime_type": {
+                                        "type": "string",
+                                        "enum": ["image/png", "image/jpeg", "image/webp"],
+                                    },
+                                    "data": {
+                                        "type": "string",
+                                        "maxLength": MAX_BASE64_CHARS,
+                                        "description": "Base64-encoded image bytes, not a URL.",
+                                    },
+                                },
+                                "required": ["mime_type", "data"],
+                                "additionalProperties": False,
+                            },
                         },
                         "mode": {
                             "type": "string",
@@ -138,6 +165,10 @@ def create_mcp_server():
             return [TextContent(type="text", text="Error: unknown mode")]
         if not isinstance(model, str) or not isinstance(full_report, bool):
             return [TextContent(type="text", text="Error: invalid model or full_report")]
+        try:
+            images = decode_mcp_images(arguments.get("images", []))
+        except ValueError as e:
+            return [TextContent(type="text", text=f"Error: {e}")]
 
         try:
             config = LLMConfig(model=model)
@@ -146,7 +177,8 @@ def create_mcp_server():
                 mode=mode,
                 quiet=True,  # No terminal output in MCP mode
             )
-            result = await engine.run(problem)
+            run = engine.run(problem, images=images) if images else engine.run(problem)
+            result = await run
             report = format_result_markdown(result, full=full_report)
 
             return [TextContent(type="text", text=report)]
